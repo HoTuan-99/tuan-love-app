@@ -25,7 +25,7 @@ export default function LoveResult({ data }: { data: any }) {
         </p>
       </section>
 
-      <TimeCounter />
+      <TimeCounter startDate={data.relationship_start} />
 
       <DynamicParallaxTimeline photos={photos} />
 

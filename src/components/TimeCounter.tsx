@@ -11,7 +11,7 @@ interface TimeLeft {
   seconds: number;
 }
 
-export default function TimeCounter() {
+export default function TimeCounter({ startDate }: { startDate?: string }) {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [mounted, setMounted] = useState(false);
 
@@ -20,11 +20,11 @@ export default function TimeCounter() {
 
     const calculateTimeLeft = () => {
       // Parse the relationship start date (Singapore timezone)
-      const startDate = new Date(loveConfig.relationshipStart);
+      const start = new Date(startDate || loveConfig.relationshipStart);
       const now = new Date();
       
       // Calculate difference in milliseconds
-      const difference = now.getTime() - startDate.getTime();
+      const difference = now.getTime() - start.getTime();
 
       if (difference > 0) {
         const days = Math.floor(difference / (1000 * 60 * 60 * 24));
