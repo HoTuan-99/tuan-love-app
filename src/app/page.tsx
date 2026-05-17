@@ -1,36 +1,130 @@
-'use client';
+"use client";
 
-import Hero from '@/components/Hero';
-import ParallaxTimeline from '@/components/ParallaxTimeline';
-import TimeCounter from '@/components/TimeCounter';
-import TulipCatcher from '@/components/TulipCatcher';
-import { useState } from 'react';
-import LoveQR from "@/components/LoveQR";
+import { useState } from "react";
+import { supabase } from "../supabase";
 
-/**
- * Main landing page component
- * Orchestrates the flow of the Valentine's Day website:
- * 1. Hero section with romantic landing
- * 2. Time counter showing relationship duration
- * 3. Parallax timeline of photos and milestones
- * 4. Interactive tulip catching game
- * 5. Valentine's invitation reveal (after game completion)
- */
 export default function Home() {
-  // Track whether the tulip catching game has been completed
-  const [gameCompleted, setGameCompleted] = useState(false);
+  const [yourName, setYourName] = useState("");
+  const [loverName, setLoverName] = useState("");
+  const [message, setMessage] = useState("");
+  const [photos, setPhotos] = useState<FileList | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleUpload() {
+    if (!photos || photos.length === 0) {
+      alert("Hãy chọn ảnh");
+      return;
+    }
+
+    setLoading(true);
+
+    const uploadedUrls: string[] = [];
+
+    for (const file of Array.from(photos)) {
+      const fileName = `${Date.now()}-${file.name}`;
+
+      const { error } = await supabase.storage
+        .from("love-photos")
+        .upload(fileName, file);
+
+      if (error) {
+        alert(error.message);
+        setLoading(false);
+        return;
+      }
+
+      const { data } = supabase.storage
+        .from("love-photos")
+        .getPublicUrl(fileName);
+
+      uploadedUrls.push(data.publicUrl);
+    }
+
+    const id = crypto.randomUUID();
+
+    await supabase.from("love_pages").insert({
+      id,
+      your_name: yourName,
+      lover_name: loverName,
+      message,
+      photos: uploadedUrls,
+    });
+
+    const finalUrl = `${window.location.origin}/love/${id}`;
+
+    alert("Đã tạo xong ❤️");
+
+    window.location.href = finalUrl;
+  }
 
   return (
-  <main className="min-h-screen">
-    <LoveQR />
+    <div
+      style={{
+        maxWidth: 500,
+        margin: "40px auto",
+        padding: 20,
+        fontFamily: "sans-serif",
+      }}
+    >
+      <h1>Tạo trang tình yêu ❤️</h1>
 
-    <Hero />
-    <TimeCounter />
-    <ParallaxTimeline />
-    <TulipCatcher
-      onComplete={() => setGameCompleted(true)}
-      gameCompleted={gameCompleted}
-    />
-  </main>
-);
+      <input
+        placeholder="Tên của bạn"
+        value={yourName}
+        onChange={(e) => setYourName(e.target.value)}
+        style={{
+          width: "100%",
+          padding: 12,
+          marginBottom: 12,
+        }}
+      />
+
+      <input
+        placeholder="Tên người yêu"
+        value={loverName}
+        onChange={(e) => setLoverName(e.target.value)}
+        style={{
+          width: "100%",
+          padding: 12,
+          marginBottom: 12,
+        }}
+      />
+
+      <textarea
+        placeholder="Lời nhắn yêu thương ❤️"
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        style={{
+          width: "100%",
+          padding: 12,
+          marginBottom: 12,
+          height: 120,
+        }}
+      />
+
+      <input
+        type="file"
+        multiple
+        onChange={(e) => setPhotos(e.target.files)}
+      />
+
+      <br />
+      <br />
+
+      <button
+        onClick={handleUpload}
+        style={{
+          padding: "14px 24px",
+          borderRadius: 12,
+          border: "none",
+          background: "hotpink",
+          color: "white",
+          fontSize: 18,
+          cursor: "pointer",
+        }}
+      >
+        {loading ? "Đang tạo..." : "Tạo trang tình yêu ❤️"}
+      </button>
+    </div>
+  );
 }
