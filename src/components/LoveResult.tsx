@@ -10,8 +10,6 @@ import DynamicParallaxTimeline from "@/components/DynamicParallaxTimeline";
 export default function LoveResult({ data }: { data: any }) {
   const [gameCompleted, setGameCompleted] = useState(false);
 
-  const photos: string[] = data.photos || [];
-
   return (
     <main className="min-h-screen">
       <Hero />
@@ -20,6 +18,7 @@ export default function LoveResult({ data }: { data: any }) {
         <h1>
           {data.your_name} ❤️ {data.lover_name}
         </h1>
+
         <p style={{ whiteSpace: "pre-wrap", fontSize: 22 }}>
           {data.message}
         </p>
@@ -27,7 +26,10 @@ export default function LoveResult({ data }: { data: any }) {
 
       <TimeCounter startDate={data.relationship_start} />
 
-      <DynamicParallaxTimeline photos={photos} />
+      <DynamicParallaxTimeline
+        photos={data.photos || []}
+        memoryDates={data.memory_dates || []}
+      />
 
       <TulipCatcher
         onComplete={() => setGameCompleted(true)}
@@ -35,6 +37,18 @@ export default function LoveResult({ data }: { data: any }) {
       />
 
       <LoveQR />
+      <footer
+  style={{
+    textAlign: "center",
+    padding: "50px 20px",
+    background: "#fff5f7",
+    color: "#e63946",
+    fontSize: 18,
+    fontWeight: 600,
+  }}
+>
+  Made with ❤️ by TuanAnh
+</footer>
     </main>
   );
 }

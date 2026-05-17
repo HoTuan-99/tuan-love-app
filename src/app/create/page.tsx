@@ -58,7 +58,8 @@ const memories = [
 
 function formatDate(date: string) {
   if (!date) return "Chưa chọn ngày";
-  return new Date(date).toLocaleDateString("en-US", {
+
+  return new Date(`${date}T00:00:00`).toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
     year: "numeric",
@@ -109,35 +110,43 @@ export default function CreatePage() {
       return;
     }
 
-    const selectedPhotos = photos.filter(Boolean) as File[];
-
-    if (selectedPhotos.length === 0) {
+    if (!photos.some((photo) => photo !== null)) {
       alert("Hãy chọn ít nhất 1 ảnh");
       return;
     }
 
     setLoading(true);
 
-    const uploadedUrls: string[] = [];
+    const uploadedUrls = await Promise.all(
+      photos.map(async (file) => {
+        if (!file) {
+          return null;
+        }
 
-    for (const file of selectedPhotos) {
-      const fileName = `${crypto.randomUUID()}-${file.name}`;
+        const fileName = `${crypto.randomUUID()}-${file.name}`;
 
-      const { error } = await supabase.storage
-        .from("love-photos")
-        .upload(fileName, file);
+        const { error } = await supabase.storage
+          .from("love-photos")
+          .upload(fileName, file);
 
-      if (error) {
-        alert(error.message);
-        setLoading(false);
-        return;
-      }
+        if (error) {
+          throw error;
+        }
 
-      const { data } = supabase.storage
-        .from("love-photos")
-        .getPublicUrl(fileName);
+        const { data } = supabase.storage
+          .from("love-photos")
+          .getPublicUrl(fileName);
 
-      uploadedUrls.push(data.publicUrl);
+        return data.publicUrl;
+      })
+    ).catch((error) => {
+      alert(error.message);
+      setLoading(false);
+      return null;
+    });
+
+    if (!uploadedUrls) {
+      return;
     }
 
     const id = crypto.randomUUID();
